@@ -1,0 +1,129 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Product {
+  id          Int           @id @default(autoincrement())
+  name        String
+  description String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  purchases   Purchase[]
+  units       ProductUnit[]
+
+  @@map("products")
+}
+
+model Currency {
+  id        Int        @id @default(autoincrement())
+  code      String     @unique
+  name      String
+  symbol    String?
+  purchases Purchase[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@map("currencies")
+}
+
+model Purchase {
+  id         Int      @id @default(autoincrement())
+  productId  Int
+  product    Product  @relation(fields: [productId], references: [id])
+  storeId    Int
+  store      Store    @relation(fields: [storeId], references: [id])
+  currencyId Int
+  currency   Currency @relation(fields: [currencyId], references: [id])
+  amount     Float
+  unitId     Int
+  unit       Unit     @relation(fields: [unitId], references: [id])
+  price      Float
+  date       DateTime
+  notes      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("purchases")
+}
+
+model Store {
+  id        Int        @id @default(autoincrement())
+  name      String
+  location  String?
+  purchases Purchase[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@map("stores")
+}
+
+model Unit {
+  id              Int              @id @default(autoincrement())
+  name            String
+  symbol          String?
+  products        ProductUnit[]
+  purchases       Purchase[]
+  fromConversions UnitConversion[] @relation("FromUnit")
+  toConversions   UnitConversion[] @relation("ToUnit")
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@map("units")
+}
+
+model ProductUnit {
+  id        Int      @id @default(autoincrement())
+  productId Int
+  product   Product  @relation(fields: [productId], references: [id])
+  unitId    Int
+  unit      Unit     @relation(fields: [unitId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([productId, unitId])
+  @@map("product_units")
+}
+
+model UnitConversion {
+  id         Int      @id @default(autoincrement())
+  fromUnitId Int
+  fromUnit   Unit     @relation("FromUnit", fields: [fromUnitId], references: [id])
+  toUnitId   Int
+  toUnit     Unit     @relation("ToUnit", fields: [toUnitId], references: [id])
+  rate       Float
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([fromUnitId, toUnitId])
+  @@map("unit_conversions")
+}
+
+enum UserRole {
+  ADMIN
+  USER
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  username  String   @unique
+  email     String   @unique
+  password  String
+  role      UserRole @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}

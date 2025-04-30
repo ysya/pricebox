@@ -1,0 +1,34 @@
+import { useApi } from './useApi'
+import type { Unit } from '~/types'
+
+export const useUnitApi = () => {
+  const api = useApi()
+
+  const getUnits = async (page: number, limit: number) => {
+    return api.getPaged<Unit>(`/api/units?page=${page}&limit=${limit}`)
+  }
+
+  const createUnit = async (data: { name: string; symbol: string }) => {
+    return api.post<Unit>('/api/units', data)
+  }
+
+  const updateUnit = async (id: number, data: { name: string; symbol: string }) => {
+    return api.put<Unit>(`/api/units/${id}`, data)
+  }
+
+  const deleteUnit = async (id: number) => {
+    return api.del(`/api/units/${id}`)
+  }
+
+  const createUnitConversion = async (data: { fromUnitId: number | null; toUnitId: number | null; rate: number }) => {
+    return api.post('/api/unit_conversion', data)
+  }
+
+  return {
+    getUnits,
+    createUnit,
+    updateUnit,
+    deleteUnit,
+    createUnitConversion
+  }
+} 
