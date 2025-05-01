@@ -1,6 +1,6 @@
-import { UserService } from '../../services'
+import { UserService } from '~/server/services'
 
-export default defineEventHandler(async (event) => {
+export default withResponse(async (event) => {
   const id = Number(getRouterParam(event, 'id'))
   if (!id) {
     throw createError({

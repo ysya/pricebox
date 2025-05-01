@@ -1,23 +1,23 @@
 import { useApi } from './useApi'
-import type { Store } from '~/types'
+import type { CreateStoreDto, StoreDto, UpdateStoreDto } from '~/types/dto/store.dto'
 
 export const useStoreApi = () => {
   const api = useApi()
 
   const getStores = async (page: number, limit: number) => {
-    return api.get<{ items: Store[]; total: number }>(`/api/store?page=${page}&limit=${limit}`)
+    return api.getPaged<StoreDto>(`/api/stores?page=${page}&limit=${limit}`)
   }
 
-  const createStore = async (data: { name: string; location: string }) => {
-    return api.post<Store>('/api/store', data)
+  const createStore = async (data: CreateStoreDto) => {
+    return api.post<StoreDto>('/api/stores', data)
   }
 
-  const updateStore = async (id: number, data: { name: string; location: string }) => {
-    return api.put<Store>(`/api/store/${id}`, data)
+  const updateStore = async (id: number, data: UpdateStoreDto) => {
+    return api.put<StoreDto>(`/api/stores/${id}`, data)
   }
 
   const deleteStore = async (id: number) => {
-    return api.del(`/api/store/${id}`)
+    return api.delete(`/api/stores/${id}`)
   }
 
   return {

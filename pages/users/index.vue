@@ -2,7 +2,7 @@
   <div class="q-pa-md">
     <div class="row justify-between items-center q-mb-md">
       <div class="text-h4">用戶管理</div>
-      <q-btn color="primary" label="新增用戶" @click="showAddDialog = true" />
+      <q-btn color="primary" label="新增用戶" @click="openAddDialog" />
     </div>
 
     <q-table
@@ -35,10 +35,10 @@
       </template>
     </q-table>
 
-    <q-dialog v-model="showAddDialog">
+    <q-dialog v-model="showDialog">
       <q-card style="min-width: 350px">
         <q-card-section>
-          <div class="text-h6">新增用戶</div>
+          <div class="text-h6">{{ isEditing ? '編輯用戶' : '新增用戶' }}</div>
         </q-card-section>
 
         <q-card-section class="q-pt-none">
@@ -59,17 +59,21 @@
               type="email"
               :rules="[(val) => !!val || '請輸入郵箱']"
             />
-            <q-input
-              v-model="form.password"
-              label="密碼"
-              type="password"
-              :rules="[(val) => !!val || '請輸入密碼']"
-            />
             <q-select
               v-model="form.role"
               :options="roleOptions"
+              :option-value="(option) => option.value"
+              :option-label="(option) => option.label"
+              map-options
               label="角色"
               :rules="[(val) => !!val || '請選擇角色']"
+            />
+            <q-input
+              v-if="!isEditing"
+              v-model="form.password"
+              label="密碼"
+              type="password"
+              :rules="[(val) => (isEditing ? true : !!val || '請輸入密碼')]"
             />
           </q-form>
         </q-card-section>
@@ -85,14 +89,16 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { useQuasar } from 'quasar'
-import type { User, TableColumn } from '~/types'
+import { useQuasar, type QTableColumn } from 'quasar'
+import type { UpdateUserDto, UserDto } from '~/types/dto/user.dto'
 import { useUserApi } from '~/composables/useUserApi'
+import { UserRole } from '~/types'
 
 const $q = useQuasar()
 const loading = ref(false)
-const users = ref<User[]>([])
-const showAddDialog = ref(false)
+const users = ref<UserDto[]>([])
+const showDialog = ref(false)
+const isEditing = ref(false)
 const pagination = ref({
   sortBy: 'id',
   descending: false,
@@ -101,20 +107,20 @@ const pagination = ref({
   rowsNumber: 0,
 })
 
-const form = ref({
+const form = ref<UpdateUserDto & { id?: number; password?: string }>({
   name: '',
   username: '',
   email: '',
+  role: UserRole.USER,
   password: '',
-  role: 'user',
 })
 
 const roleOptions = [
-  { label: '管理員', value: 'admin' },
-  { label: '一般用戶', value: 'user' },
+  { label: '管理員', value: UserRole.ADMIN },
+  { label: '一般用戶', value: UserRole.USER },
 ]
 
-const columns: TableColumn[] = [
+const columns: QTableColumn[] = [
   { name: 'id', label: 'ID', field: 'id', align: 'left' },
   { name: 'name', label: '姓名', field: 'name', align: 'left' },
   { name: 'username', label: '用戶名', field: 'username', align: 'left' },
@@ -147,41 +153,75 @@ const onRequest = async (props: any) => {
   }
 }
 
+const resetForm = () => {
+  form.value = {
+    name: '',
+    username: '',
+    email: '',
+    role: UserRole.USER,
+    password: '',
+  }
+}
+
+const openAddDialog = () => {
+  isEditing.value = false
+  resetForm()
+  showDialog.value = true
+}
+
+const editUser = (user: UserDto) => {
+  isEditing.value = true
+  form.value = { ...user }
+  showDialog.value = true
+}
+
 const onSubmit = async () => {
   try {
-    const response = await fetch('/api/users', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(form.value),
-    })
+    if (isEditing.value && form.value.id) {
+      // 編輯模式
+      await userApi.updateUser(form.value.id, {
+        name: form.value.name,
+        username: form.value.username,
+        email: form.value.email,
+        role: form.value.role,
+      })
 
-    if (!response.ok) {
-      throw new Error('新增用戶失敗')
+      $q.notify({
+        color: 'positive',
+        message: '更新用戶成功',
+      })
+    } else {
+      // 新增模式
+      await userApi.createUser({
+        name: form.value.name || '',
+        username: form.value.username || '',
+        email: form.value.email || '',
+        role: form.value.role as UserRole,
+        password: form.value.password || '',
+      })
+
+      $q.notify({
+        color: 'positive',
+        message: '新增用戶成功',
+      })
     }
 
-    $q.notify({
-      color: 'positive',
-      message: '新增用戶成功',
-    })
-
-    showAddDialog.value = false
+    showDialog.value = false
     onRequest({ pagination: pagination.value })
   } catch (error) {
     $q.notify({
       color: 'negative',
-      message: error instanceof Error ? error.message : '新增用戶失敗',
+      message:
+        error instanceof Error
+          ? error.message
+          : isEditing.value
+          ? '更新用戶失敗'
+          : '新增用戶失敗',
     })
   }
 }
 
-const editUser = (user: User) => {
-  form.value = { ...user, password: '' }
-  showAddDialog.value = true
-}
-
-const confirmDelete = (user: User) => {
+const confirmDelete = (user: UserDto) => {
   $q.dialog({
     title: '確認刪除',
     message: `確定要刪除用戶 ${user.name} 嗎？`,
@@ -189,13 +229,7 @@ const confirmDelete = (user: User) => {
     persistent: true,
   }).onOk(async () => {
     try {
-      const response = await fetch(`/api/users/${user.id}`, {
-        method: 'DELETE',
-      })
-
-      if (!response.ok) {
-        throw new Error('刪除用戶失敗')
-      }
+      await userApi.deleteUser(user.id)
 
       $q.notify({
         color: 'positive',

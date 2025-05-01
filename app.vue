@@ -10,7 +10,7 @@
           @click="toggleLeftDrawer"
           v-if="userStore.isAuthenticated"
         />
-        <q-toolbar-title> PriceBox 管理系統 </q-toolbar-title>
+        <q-toolbar-title> PriceBox </q-toolbar-title>
         <q-space />
         <q-btn-dropdown
           flat

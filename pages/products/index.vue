@@ -134,19 +134,22 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useQuasar } from 'quasar'
-import type { Product, Unit, TableColumn } from '~/types'
+import { useQuasar, type QTableColumn } from 'quasar'
+import type { UnitDto } from '~/types/dto/unit.dto'
+import type { ProductDto } from '~/types/dto/product.dto'
 
 const $q = useQuasar()
 const loading = ref(false)
-const products = ref<Product[]>([])
-const units = ref<Unit[]>([])
+const products = ref<ProductDto[]>([])
+const units = ref<UnitDto[]>([])
 const showAddDialog = ref(false)
 const showUnitsDialog = ref(false)
-const editingProduct = ref<Product | null>(null)
-const selectedProduct = ref<Product | null>(null)
-const productUnits = ref<Unit[]>([])
-const selectedUnit = ref<Unit | null>(null)
+const editingProduct = ref<ProductDto | null>(null)
+const selectedProduct = ref<ProductDto | null>(null)
+const productUnits = ref<UnitDto[]>([])
+const selectedUnit = ref<UnitDto | null>(null)
+const productApi = useProductApi()
+const unitApi = useUnitApi()
 
 const pagination = ref({
   sortBy: 'id',
@@ -161,7 +164,7 @@ const form = ref({
   description: '',
 })
 
-const columns: TableColumn[] = [
+const columns: QTableColumn[] = [
   { name: 'id', label: 'ID', field: 'id', align: 'left' },
   { name: 'name', label: '產品名稱', field: 'name', align: 'left' },
   {
@@ -186,12 +189,9 @@ const onRequest = async (props: any) => {
   loading.value = true
 
   try {
-    const response = await fetch(
-      `/api/products?page=${page}&limit=${rowsPerPage}`,
-    )
-    const data = await response.json()
-    products.value = data.items
-    pagination.value.rowsNumber = data.total
+    const response = await productApi.getProducts(page, rowsPerPage)
+    products.value = response.data
+    pagination.value.rowsNumber = response.pageInfo.total
     pagination.value.page = page
     pagination.value.rowsPerPage = rowsPerPage
     pagination.value.sortBy = sortBy
@@ -208,9 +208,8 @@ const onRequest = async (props: any) => {
 
 const loadUnits = async () => {
   try {
-    const response = await fetch('/api/units')
-    const data = await response.json()
-    units.value = data.items
+    const response = await unitApi.getUnits(1, 100)
+    units.value = response.data
   } catch (error) {
     $q.notify({
       color: 'negative',
@@ -221,9 +220,8 @@ const loadUnits = async () => {
 
 const loadProductUnits = async (productId: number) => {
   try {
-    const response = await fetch(`/api/products/${productId}/units`)
-    const data = await response.json()
-    productUnits.value = data
+    const response = await productApi.getProductUnits(productId)
+    productUnits.value = response.data
   } catch (error) {
     $q.notify({
       color: 'negative',
@@ -282,20 +280,10 @@ const addUnit = async () => {
   if (!selectedUnit.value || !selectedProduct.value) return
 
   try {
-    const response = await fetch(
-      `/api/products/${selectedProduct.value.id}/units`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ unitId: selectedUnit.value.id }),
-      },
+    const response = await productApi.addProductUnit(
+      selectedProduct.value.id,
+      selectedUnit.value.id,
     )
-
-    if (!response.ok) {
-      throw new Error('新增產品單位失敗')
-    }
 
     await loadProductUnits(selectedProduct.value.id)
     selectedUnit.value = null
@@ -307,20 +295,14 @@ const addUnit = async () => {
   }
 }
 
-const removeUnit = async (unit: Unit) => {
+const removeUnit = async (unit: UnitDto) => {
   if (!selectedProduct.value) return
 
   try {
-    const response = await fetch(
-      `/api/products/${selectedProduct.value.id}/units/${unit.id}`,
-      {
-        method: 'DELETE',
-      },
+    const response = await productApi.removeProductUnit(
+      selectedProduct.value.id,
+      unit.id,
     )
-
-    if (!response.ok) {
-      throw new Error('移除產品單位失敗')
-    }
 
     await loadProductUnits(selectedProduct.value.id)
   } catch (error) {
@@ -339,13 +321,7 @@ const confirmDelete = (product: any) => {
     persistent: true,
   }).onOk(async () => {
     try {
-      const response = await fetch(`/api/products/${product.id}`, {
-        method: 'DELETE',
-      })
-
-      if (!response.ok) {
-        throw new Error('刪除產品失敗')
-      }
+      const response = await productApi.deleteProduct(product.id)
 
       $q.notify({
         color: 'positive',

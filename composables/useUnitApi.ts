@@ -1,23 +1,24 @@
+import type { Unit } from '~/generated/prisma'
 import { useApi } from './useApi'
-import type { Unit } from '~/types'
+import type { UnitDto } from '~/types/dto/unit.dto'
 
 export const useUnitApi = () => {
   const api = useApi()
 
   const getUnits = async (page: number, limit: number) => {
-    return api.getPaged<Unit>(`/api/units?page=${page}&limit=${limit}`)
+    return api.getPaged<UnitDto>(`/api/units?page=${page}&limit=${limit}`)
   }
 
   const createUnit = async (data: { name: string; symbol: string }) => {
-    return api.post<Unit>('/api/units', data)
+    return api.post<UnitDto>('/api/units', data)
   }
 
   const updateUnit = async (id: number, data: { name: string; symbol: string }) => {
-    return api.put<Unit>(`/api/units/${id}`, data)
+    return api.put<UnitDto>(`/api/units/${id}`, data)
   }
 
   const deleteUnit = async (id: number) => {
-    return api.del(`/api/units/${id}`)
+    return api.delete(`/api/units/${id}`)
   }
 
   const createUnitConversion = async (data: { fromUnitId: number | null; toUnitId: number | null; rate: number }) => {

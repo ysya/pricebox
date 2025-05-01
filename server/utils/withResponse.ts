@@ -13,22 +13,16 @@ export function withResponse<T>(handler: (event: H3Event) => Promise<T>) {
       ) {
         return {
           code: 0,
-          message: '成功',
           ...result
         }
       }
 
       return {
         code: 0,
-        message: '成功',
         data: result
       }
     } catch (error: any) {
-      return {
-        code: error?.code ?? -1,
-        message: error?.message ?? '伺服器錯誤',
-        data: null
-      }
+      throw error;
     }
   })
 }

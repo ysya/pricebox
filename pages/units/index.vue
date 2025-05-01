@@ -113,18 +113,18 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useQuasar } from 'quasar'
-import type { TableColumn, Unit } from '~/types'
+import { useQuasar, type QTableColumn } from 'quasar'
 import { useUnitApi } from '~/composables/useUnitApi'
+import type { UnitDto } from '~/types/dto/unit.dto'
 
 const $q = useQuasar()
 const unitApi = useUnitApi()
 const loading = ref(false)
-const units = ref<Unit[]>([])
+const units = ref<UnitDto[]>([])
 const showAddUnitDialog = ref(false)
 const showConversionDialog = ref(false)
-const editingUnit = ref<Unit | null>(null)
-const selectedUnit = ref<Unit | null>(null)
+const editingUnit = ref<UnitDto | null>(null)
+const selectedUnit = ref<UnitDto | null>(null)
 
 const pagination = ref({
   sortBy: 'id',
@@ -145,7 +145,7 @@ const conversionForm = ref({
   rate: 1,
 })
 
-const unitColumns: TableColumn[] = [
+const unitColumns: QTableColumn[] = [
   { name: 'id', label: 'ID', field: 'id', align: 'left' },
   { name: 'name', label: '單位名稱', field: 'name', align: 'left' },
   { name: 'symbol', label: '單位符號', field: 'symbol', align: 'left' },
@@ -242,7 +242,7 @@ const onSubmitConversion = async () => {
   }
 }
 
-const confirmDeleteUnit = (unit: Unit) => {
+const confirmDeleteUnit = (unit: UnitDto) => {
   $q.dialog({
     title: '確認刪除',
     message: `確定要刪除單位 ${unit.name} 嗎？`,

@@ -1,16 +1,19 @@
 import { PrismaClient, UserRole } from '~/generated/prisma'
 import bcrypt from 'bcrypt'
+import type { IService } from './IService';
+import type { CreateUserDto, UserDto } from '~/types/dto/user.dto';
 
 const prisma = new PrismaClient()
 
-export class UserService {
-  async create(data: { name: string; username: string; email: string; password: string; role?: UserRole }) {
+export class UserService implements IService<UserDto> {
+
+  async create(data: CreateUserDto) {
+    console.log('create', data)
     const hashedPassword = await bcrypt.hash(data.password, 10)
     return await prisma.user.create({
       data: {
         ...data,
         password: hashedPassword,
-        role: data.role || UserRole.USER
       }
     })
   }
@@ -66,7 +69,7 @@ export class UserService {
   }
 
   async delete(id: number) {
-    return await prisma.user.delete({
+    await prisma.user.delete({
       where: { id }
     })
   }
@@ -75,7 +78,7 @@ export class UserService {
     return await bcrypt.compare(password, user.password)
   }
 
-  async validateUser(username: string, password: string) {
+  async validateUser(username: string, password: string): Promise<UserDto | null> {
     const user = await this.findByUsername(username)
     if (!user) return null
 
@@ -86,7 +89,8 @@ export class UserService {
       id: user.id,
       name: user.name,
       username: user.username,
-      email: user.email
+      email: user.email,
+      role: user.role
     }
   }
 } 

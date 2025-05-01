@@ -19,3 +19,9 @@ export interface ApiResponse<T> {
     total: number
   }
 }
+
+export interface ApiError {
+  code: number
+  message: string
+  errors?: Record<string, string>
+}

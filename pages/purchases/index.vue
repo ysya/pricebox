@@ -116,25 +116,20 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useQuasar } from 'quasar'
-import type {
-  Purchase,
-  ProductWithUnits,
-  Store,
-  Currency,
-  Unit,
-  TableColumn,
-} from '~/types'
+import { useQuasar, type QTableColumn } from 'quasar'
+import type { Purchase, ProductWithUnits, Currency, Unit } from '~/types'
+import type { StoreDto } from '~/types/dto/store.dto'
 
 const $q = useQuasar()
 const loading = ref(false)
 const purchases = ref<Purchase[]>([])
 const products = ref<ProductWithUnits[]>([])
-const stores = ref<Store[]>([])
+const stores = ref<StoreDto[]>([])
 const currencies = ref<Currency[]>([])
 const units = ref<Unit[]>([])
 const showAddDialog = ref(false)
 const editingPurchase = ref<Purchase | null>(null)
+// const purchaseApi = usePurchaseApi()
 
 const pagination = ref({
   sortBy: 'id',
@@ -164,7 +159,7 @@ const form = ref<{
   notes: '',
 })
 
-const columns: TableColumn[] = [
+const columns: QTableColumn[] = [
   { name: 'id', label: 'ID', field: 'id', align: 'left' },
   { name: 'product', label: '產品', field: 'product', align: 'left' },
   { name: 'store', label: '商店', field: 'store', align: 'left' },

@@ -1,7 +1,7 @@
-import { defineEventHandler, getRouterParam } from 'h3'
-import { ProductService } from '../../../../services/product.service'
+import { getRouterParam } from 'h3'
+import { ProductService } from '~/server/services/product.service'
 
-export default defineEventHandler(async (event) => {
+export default withResponse(async (event) => {
   try {
     const productId = parseInt(getRouterParam(event, 'id') || '0')
     const unitId = parseInt(getRouterParam(event, 'unitId') || '0')

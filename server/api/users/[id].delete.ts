@@ -1,6 +1,6 @@
 import { UserService } from '../../services'
 
-export default defineEventHandler(async (event) => {
+export default withResponse(async (event) => {
   const id = Number(getRouterParam(event, 'id'))
   if (!id) {
     throw createError({
@@ -21,5 +21,5 @@ export default defineEventHandler(async (event) => {
   }
 
   await userService.delete(id)
-  return { success: true }
+  return
 }) 

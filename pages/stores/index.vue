@@ -70,14 +70,14 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { useQuasar } from 'quasar'
-import type { Store, TableColumn } from '~/types'
+import { useQuasar, type QTableColumn } from 'quasar'
+import type { StoreDto } from '~/types/dto/store.dto'
 import { useStoreApi } from '~/composables/useStoreApi'
 
 const $q = useQuasar()
 const storeApi = useStoreApi()
 const loading = ref(false)
-const stores = ref<Store[]>([])
+const stores = ref<StoreDto[]>([])
 const showAddDialog = ref(false)
 const editingStore = ref<{ id: number; name: string; location: string } | null>(
   null,
@@ -96,7 +96,7 @@ const form = ref({
   location: '',
 })
 
-const columns: TableColumn[] = [
+const columns: QTableColumn[] = [
   { name: 'id', label: 'ID', field: 'id', align: 'left' },
   { name: 'name', label: '商店名稱', field: 'name', align: 'left' },
   {
@@ -120,8 +120,8 @@ const onRequest = async (props: any) => {
   try {
     const data = await storeApi.getStores(page, rowsPerPage)
     if (data) {
-      stores.value = data.items
-      pagination.value.rowsNumber = data.total
+      stores.value = data.data
+      pagination.value.rowsNumber = data.pageInfo.total
       pagination.value.page = page
       pagination.value.rowsPerPage = rowsPerPage
       pagination.value.sortBy = sortBy
@@ -180,14 +180,12 @@ const confirmDelete = (store: any) => {
     persistent: true,
   }).onOk(async () => {
     try {
-      const success = await storeApi.deleteStore(store.id)
-      if (success) {
-        $q.notify({
-          color: 'positive',
-          message: '刪除商店成功',
-        })
-        onRequest({ pagination: pagination.value })
-      }
+      await storeApi.deleteStore(store.id)
+      $q.notify({
+        color: 'positive',
+        message: '刪除商店成功',
+      })
+      onRequest({ pagination: pagination.value })
     } catch (error) {
       $q.notify({
         color: 'negative',

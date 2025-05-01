@@ -1,7 +1,8 @@
+import type { UserDto } from '~/types/dto/user.dto'
 import { UserService } from '../../services'
 import { generateJWT } from '../../utils/jwt'
 
-export default defineEventHandler(async (event) => {
+export default withResponse(async (event) => {
   const body = await readBody(event)
 
   const { username, password } = body
@@ -24,8 +25,9 @@ export default defineEventHandler(async (event) => {
 
   const token = generateJWT({ id: user.id })
 
-  return {
+  var response: { user: UserDto, token: string } = {
     user,
     token
   }
+  return response
 }) 

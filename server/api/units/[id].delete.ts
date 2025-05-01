@@ -1,7 +1,7 @@
-import { defineEventHandler, getRouterParam } from 'h3'
-import { UnitService } from '../../services/unit.service'
+import { getRouterParam } from 'h3'
+import { UnitService } from '~/server/services/unit.service'
 
-export default defineEventHandler(async (event) => {
+export default withResponse(async (event) => {
   try {
     const id = parseInt(getRouterParam(event, 'id') || '0')
     if (!id) {

@@ -1,7 +1,7 @@
-import { defineEventHandler, readBody } from 'h3'
-import { UnitService } from '../../services/unit.service'
+import { readBody } from 'h3'
+import { UnitService } from '~/server/services/unit.service'
 
-export default defineEventHandler(async (event) => {
+export default withResponse(async (event) => {
   try {
     const body = await readBody(event)
     const { name, symbol } = body

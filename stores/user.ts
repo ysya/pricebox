@@ -1,31 +1,26 @@
 import { defineStore } from 'pinia'
-import { UserRole, type User } from '~/types'
+import { useAuthCookie } from '~/composables/auth'
+import { UserRole } from '~/types'
+import type { UserDto } from '~/types/dto/user.dto'
 
 export const useUserStore = defineStore('user', () => {
-  const user = ref<User | null>(null)
+  const user = ref<UserDto | null>(null)
 
   const isAuthenticated = computed(() => !!user.value)
   const isAdmin = computed(() => user.value?.role === UserRole.ADMIN)
   const auth = useAuthCookie()
 
+  const authApi = useAuthApi()
+  const userApi = useUserApi()
+
   async function login(username: string, password: string) {
 
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ username, password })
-      })
+      const response = await authApi.login(username, password)
+      console.log('登入成功', response)
 
-      if (!response.ok) {
-        throw new Error('登入失敗')
-      }
-
-      const data = await response.json()
-      user.value = data.user
-      auth.setAuthToken(data.token)
+      user.value = response.user
+      auth.setAuthToken(response.token)
     } catch (error) {
       throw error instanceof Error ? error : new Error('登入失敗')
     }
@@ -37,25 +32,17 @@ export const useUserStore = defineStore('user', () => {
   }
 
   async function checkAuth() {
-    const auth = useAuthCookie()
-    if (auth.getAuthToken()) {
-      const response = await fetch('/api/users/me', {
-        headers: {
-          'Authorization': `Bearer ${auth.getAuthToken()}`
-        }
-      })
-
-      if (!response.ok) {
-        auth.removeAuthToken()
-        return false
+    try {
+      const auth = useAuthCookie()
+      if (auth.getAuthToken()) {
+        const response = await userApi.getMe()
+        user.value = response
+        return true
       }
-
-      const data = await response.json()
-      user.value = data
-      return true
+    } catch (error) {
+      auth.removeAuthToken()
+      return false
     }
-
-    return false
   }
 
   return {

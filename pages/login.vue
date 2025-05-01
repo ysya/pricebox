@@ -91,7 +91,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useUserStore } from '~/stores/user'
 import { useQuasar } from 'quasar'
-import { useRouter, useRoute } from 'vue-router'
+import { useRoute } from 'vue-router'
 
 definePageMeta({
   middleware: ['auth-redirect'],
@@ -116,12 +116,12 @@ const onSubmit = async () => {
     const redirectPath = route.query.redirect
       ? String(route.query.redirect)
       : '/dashboard'
-    console.log('登入成功，重定向到:', redirectPath)
     navigateTo(redirectPath)
   } catch (error) {
+    console.error('登入失敗:', error)
     $q.notify({
       color: 'negative',
-      message: '登入失敗，請檢查用戶名和密碼',
+      message: '登入失敗',
     })
   } finally {
     loading.value = false
